@@ -16,7 +16,7 @@ func ListarActivos(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	query := `SELECT id, serial, host_name, modelo_id, anio_compra, anio_renovacion, ciclo_de_vida, disposition, status, notas_tecnicas FROM activos`
+	query := `SELECT id, serial, host_name, modelo_id, anio_compra, anio_renovacion, ciclo_de_vida, disposicion, status, notas_tecnicas FROM activos`
 	rows, err := database.DB.Query(query)
 	if err != nil {
 		log.Println("Error al consultar activos", err)
@@ -48,5 +48,65 @@ func ListarActivos(w http.ResponseWriter, r *http.Request) {
 	//transformar slice go en json y enviar al cliente / navegador
 
 	json.NewEncoder(w).Encode(activos)
+
+}
+
+// insertar un nuevo activo a la base de datos
+func InsertarActivo(w http.ResponseWriter, r *http.Request) {
+	//validar que el metodo sea POST
+	if r.Method != http.MethodPost {
+		http.Error(w, "metodo no permitido, debe ser POST", http.StatusMethodNotAllowed)
+		return
+	}
+
+	//Crear molde vacio de activo para recibir los datos del cliente
+	var nuevoActivo models.Activo
+
+	//leer el json que viene de la peticion y copiarlo al molde
+	err := json.NewDecoder(r.Body).Decode(&nuevoActivo)
+	if err != nil {
+		log.Println("Error al decodificar el cuerpo de la solicitud", err)
+		http.Error(w, "Datos inválidos", http.StatusBadRequest)
+		return
+	}
+
+	//preparar consulta sql se usan $1 $2... para evitar inyeccion sql
+	//nota; no pasamos ID por que Postgres lo genera automaticamente
+	query := `INSERT INTO activos (serial, host_name, modelo_id, anio_compra, anio_renovacion, ciclo_de_vida, disposicion, status, notas_tecnicas) 
+				VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) 
+				RETURNING id`
+
+	//ejecutar consulta pasando los valores del struct nuevoActivo
+	err = database.DB.QueryRow(
+		query,
+		nuevoActivo.Serial,
+		nuevoActivo.HostName,
+		nuevoActivo.ModeloID,
+		nuevoActivo.AnioCompra,
+		nuevoActivo.AnioRenovacion,
+		nuevoActivo.CicloDeVida,
+		nuevoActivo.Disposicion,
+		nuevoActivo.Status,
+		nuevoActivo.NotasTecnicas,
+	).Scan(&nuevoActivo.ID) //obtener el ID generado por la base de datos
+
+	if err != nil {
+		log.Println("Error al insertar nuevo activo", err)
+		http.Error(w, "Error interno del servidor", http.StatusInternalServerError)
+		return
+	}
+
+	if nuevoActivo.Serial == "" || nuevoActivo.ModeloID == 0 {
+		http.Error(w, "Los campos serial y modelo son obligatorios", http.StatusBadRequest)
+		return
+	}
+
+	//responderle al usuario con un json indicando el exito
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"mensaje": "Equipo Registrado con exito",
+		"activo":  nuevoActivo,
+	})
 
 }

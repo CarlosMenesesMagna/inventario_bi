@@ -18,7 +18,16 @@ func main() {
 	})
 
 	// 2. Registramos la nueva URL para listar activos
-	http.HandleFunc("/api/activos", handlers.ListarActivos)
+	http.HandleFunc("/api/activos", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.ListarActivos(w, r) // Llamamos a la función para listar activos
+		case http.MethodPost:
+			handlers.InsertarActivo(w, r) // Llamamos a la función para insertar un nuevo activo
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
 
 	fmt.Println("Servidor corriendo en http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))

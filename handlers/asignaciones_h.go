@@ -42,7 +42,7 @@ func InsertarAsignacion(w http.ResponseWriter, r *http.Request) {
 		nuevaAsignacion.UsuarioID,
 		nuevaAsignacion.SitioID,
 		nuevaAsignacion.UbicacionFisica,
-	).Scan(&nuevaAsignacion.ID) //que hace Scan?
+	).Scan(&nuevaAsignacion.ID) //obtener el ID generado por la base de datos
 
 	if err != nil {
 		log.Println("Error al insertar la asignación en la base de datos", err)
@@ -105,4 +105,38 @@ func ListarAsignaciones(w http.ResponseWriter, r *http.Request) {
 	//Devolver el JSON con la lista de asignaciones al cliente
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(asignaciones)
+}
+
+func ActualizarAsignacion(w http.ResponseWriter, r *http.Request) {
+	//obtener id de asignacion
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "ID de asignación es requerido", http.StatusBadRequest)
+		return
+	}
+
+	//ejecutar el update en bd para marcar la fecha de devolución
+	query := `
+		UPDATE asignaciones
+		SET fecha_devolucion = CURRENT_DATE
+		WHERE id = $1 AND fecha_devolucion IS NULL
+	`
+	resultado, err := database.DB.Exec(query, idStr)
+	if err != nil {
+		log.Println("Error al registrar la devolución en la BD: ", err)
+		http.Error(w, "Error interno al procesar la devolución", http.StatusInternalServerError)
+		return
+	}
+
+	//validar si realmente se modifico la fila, puede que el id no existiera o que ya tuviera fecha de devolución
+	filasAfectadas, err := resultado.RowsAffected()
+	if filasAfectadas == 0 {
+		http.Error(w, "La asignación no existe o el equipo ya había sido devuelto antes", http.StatusNotFound)
+		return
+	}
+	//respuesta de exito
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"mensaje": "Devolución registrada con éxito",
+	})
 }

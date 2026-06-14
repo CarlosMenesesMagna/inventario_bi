@@ -40,6 +40,8 @@ func main() {
 			handlers.InsertarAsignacion(w, r) // función para insertar una nueva asignación
 		case http.MethodGet:
 			handlers.ListarAsignaciones(w, r) // función para listar asignaciones
+		case http.MethodPut:
+			handlers.ActualizarAsignacion(w, r) // función para actualizar una asignación existente
 		default:
 			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		}

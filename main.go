@@ -21,11 +21,25 @@ func main() {
 	http.HandleFunc("/api/activos", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			handlers.ListarActivos(w, r) // Llamamos a la función para listar activos
+			handlers.ListarActivos(w, r) // función para listar activos
 		case http.MethodPost:
-			handlers.InsertarActivo(w, r) // Llamamos a la función para insertar un nuevo activo
+			handlers.InsertarActivo(w, r) // función para insertar un nuevo activo
 		case http.MethodPut:
-			handlers.ActualizarActivo(w, r) // Llamamos a la función para actualizar un activo existente
+			handlers.ActualizarActivo(w, r) // función para actualizar un activo existente
+		case http.MethodDelete:
+			handlers.EliminarActivo(w, r) // función para eliminar un activo
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// rutas para asignaciones
+	http.HandleFunc("/api/asignaciones", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodPost:
+			handlers.InsertarAsignacion(w, r) // función para insertar una nueva asignación
+		case http.MethodGet:
+			handlers.ListarAsignaciones(w, r) // función para listar asignaciones
 		default:
 			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		}

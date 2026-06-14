@@ -37,13 +37,3 @@ type Activo struct {
 	Status         string `json:"status"`
 	NotasTecnicas  string `json:"notas_tecnicas"`
 }
-
-type Asignacion struct {
-	ID              int    `json:"id"`
-	ActivoID        int    `json:"activo_id"`
-	UsuarioID       int    `json:"usuario_id"`
-	SitioID         int    `json:"sitio_id"`
-	UbicacionFisica string `json:"ubicacion_fisica"`
-	FechaEntrega    string `json:"fecha_entrega"`
-	FechaDevolucion string `json:"fecha_devolucion,omitempty"`
-}

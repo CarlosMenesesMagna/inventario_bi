@@ -165,3 +165,35 @@ func ActualizarActivo(w http.ResponseWriter, r *http.Request) {
 		"mensaje": "Activo actualizado con éxito",
 	})
 }
+
+func EliminarActivo(w http.ResponseWriter, r *http.Request) {
+	//obtener id de la url
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "ID del activo es requerido", http.StatusBadRequest)
+		return
+	}
+	//preparar y ejecutar el delete en la bd
+
+	query := `DELETE FROM activos WHERE id=$1`
+
+	//exec ejecuta el comando
+	resultado, err := database.DB.Exec(query, idStr)
+	if err != nil {
+		log.Println("Error al eliminar activo", err)
+		http.Error(w, "Error al eliminar en la bd", http.StatusInternalServerError)
+		return
+	}
+
+	//validar si realmente se borró , puede que el id no existiera
+	filasAfectadas, err := resultado.RowsAffected()
+	if filasAfectadas == 0 {
+		http.Error(w, "No se encontró un activo con ese ID", http.StatusNotFound)
+		return
+	}
+	//respuesta de exito
+	w.Header().Set("Content-type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"mensaje": "Activo eliminado con éxito",
+	})
+}

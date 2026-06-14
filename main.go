@@ -47,6 +47,30 @@ func main() {
 		}
 	})
 
+	//rutas api sitios
+	http.HandleFunc("/api/sitios", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.ListarSitios(w, r) // función para listar sitios
+		case http.MethodPost:
+			handlers.InsertarSitio(w, r) // función para insertar un nuevo sitio
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
+	//ruta api/usuarios
+	http.HandleFunc("/api/usuarios", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.ListarUsuarios(w, r) // función para listar usuarios
+		case http.MethodPost:
+			handlers.InsertarUsuario(w, r) // función para insertar un nuevo usuario
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Iniciar el servidor en el puerto 8080
 	fmt.Println("Servidor corriendo en http://localhost:8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -110,3 +110,58 @@ func InsertarActivo(w http.ResponseWriter, r *http.Request) {
 	})
 
 }
+
+// modificar activo existente en la base de datos
+func ActualizarActivo(w http.ResponseWriter, r *http.Request) {
+	//obtener id de la url
+	idStr := r.URL.Query().Get("id")
+	if idStr == "" {
+		http.Error(w, "ID del activo es requerido", http.StatusBadRequest)
+		return
+	}
+	//decodificar json con datos nuevos del activo
+	var activoActualizado models.Activo
+	err := json.NewDecoder(r.Body).Decode(&activoActualizado)
+	if err != nil {
+		log.Println("Error al decodificar JSON", err)
+		http.Error(w, "Datos inválidos", http.StatusBadRequest)
+		return
+	}
+
+	//validar campos obligatorios
+	if activoActualizado.Serial == "" || activoActualizado.ModeloID == 0 {
+		http.Error(w, "Los campos serial y modelo son obligatorios", http.StatusBadRequest)
+		return
+	}
+
+	//ejecutar el update en la base de datos
+	query := `UPDATE activos SET serial=$1, host_name=$2, modelo_id=$3,
+			 anio_compra=$4, anio_renovacion=$5, ciclo_de_vida=$6, disposicion=$7,
+			  status=$8, notas_tecnicas=$9 WHERE id=$10`
+
+	//se usa exec cuando no se espera que la bd devuelva algo, a diferencia de query o queryrow que si esperan resultado
+	_, err = database.DB.Exec(
+		query,
+		activoActualizado.Serial,
+		activoActualizado.HostName,
+		activoActualizado.ModeloID,
+		activoActualizado.AnioCompra,
+		activoActualizado.AnioRenovacion,
+		activoActualizado.CicloDeVida,
+		activoActualizado.Disposicion,
+		activoActualizado.Status,
+		activoActualizado.NotasTecnicas,
+		idStr, //id que sacamos de la url para saber que activo actualizar
+	)
+	if err != nil {
+		log.Println("Error al actualizar activo", err)
+		http.Error(w, "Error interno del servidor", http.StatusInternalServerError)
+		return
+	}
+
+	//respuesta de exito
+	w.Header().Set("Content-type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"mensaje": "Activo actualizado con éxito",
+	})
+}

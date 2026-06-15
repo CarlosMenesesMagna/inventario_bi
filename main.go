@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"inventario_bi/database"
-	"inventario_bi/handlers" // 1. Importamos la nueva carpeta de handlers
+	"inventario_bi/handlers"
 )
 
 func main() {
@@ -94,5 +94,28 @@ func main() {
 
 	// Iniciar el servidor en el puerto 8080
 	fmt.Println("Servidor corriendo en http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Println("Servidor corriendo en http://localhost:8080 con CORS habilitado")
+	log.Fatal(http.ListenAndServe(":8080", enableCORS(http.DefaultServeMux)))
+}
+
+// enableCORS es un Middleware que agrega las cabeceras necesarias para permitir
+// que un frontend (como React) se conecte sin ser bloqueado por el navegador.
+func enableCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Le decimos al navegador: "Sí, acepto peticiones desde cualquier origen (*)"
+		// En producción estricta, en vez de "*" pondrías "http://localhost:5173"
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		// Los navegadores envían una petición fantasma llamada "OPTIONS" antes del POST/PUT/DELETE
+		// para preguntar si tienen permiso. Si es OPTIONS, le decimos OK y cortamos ahí.
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+
+		// Si todo está bien, dejamos que la petición siga su camino hacia tus handlers
+		next.ServeHTTP(w, r)
+	})
 }

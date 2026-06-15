@@ -69,6 +69,28 @@ func main() {
 			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		}
 	})
+	//ruta api/modelos
+	http.HandleFunc("/api/modelos", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.ListarModelos(w, r) // función para listar modelos
+		case http.MethodPost:
+			handlers.InsertarModelo(w, r) // función para insertar un nuevo modelo
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
+	//ruta api/empresas
+	http.HandleFunc("/api/empresas", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			handlers.ListarEmpresas(w, r) // función para listar empresas
+		case http.MethodPost:
+			handlers.InsertarEmpresa(w, r) // función para insertar una nueva empresa
+		default:
+			http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Iniciar el servidor en el puerto 8080
 	fmt.Println("Servidor corriendo en http://localhost:8080")
